@@ -4,15 +4,19 @@ use crate::plugin::{Plugin, PluginDecision, PluginRequestContext, PluginResponse
 use arc_swap::ArcSwap;
 use http_body_util::{BodyExt, Full};
 use hyper::body::{Bytes, Incoming};
+use hyper::service::service_fn;
 use hyper::{HeaderMap, Request, Response, StatusCode, Uri};
 use hyper_util::client::legacy::connect::HttpConnector;
 use hyper_util::client::legacy::Client;
-use hyper_util::rt::TokioExecutor;
+use hyper_util::rt::{TokioExecutor, TokioIo};
+use hyper_util::server::conn::auto::Builder as ConnBuilder;
 use std::collections::HashMap;
+use std::net::SocketAddr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
-use tracing::{info, warn};
+use tokio::net::TcpStream;
+use tracing::{error, info, warn};
 
 pub type ProxyBody = Full<Bytes>;
 type HttpClient = Client<HttpConnector, Incoming>;
@@ -54,6 +58,24 @@ impl ProxyState {
     /// requêtes voient le nouvel état. Pas de coupure de service.
     pub fn replace_snapshot(&self, new_snapshot: ProxySnapshot) {
         self.snapshot.store(Arc::new(new_snapshot));
+    }
+}
+
+/// Sert une connexion TCP acceptée jusqu'à sa fermeture, en routant chaque
+/// requête HTTP qu'elle transporte vers `handle_request`. Séparée de la
+/// boucle d'accept (`main.rs`) pour être réutilisable telle quelle par les
+/// tests d'intégration, qui n'ont pas besoin de la logique d'arrêt propre.
+pub async fn serve_connection(io: TokioIo<TcpStream>, peer_addr: SocketAddr, state: ProxyState) {
+    let service = service_fn(move |req| {
+        let state = state.clone();
+        async move { handle_request(state, req).await }
+    });
+
+    if let Err(e) = ConnBuilder::new(TokioExecutor::new())
+        .serve_connection(io, service)
+        .await
+    {
+        error!(error = %e, %peer_addr, "erreur sur la connexion");
     }
 }
 

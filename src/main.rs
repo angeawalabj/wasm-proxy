@@ -1,20 +1,13 @@
-mod config;
-mod hot_reload;
-mod metrics;
-mod plugin;
-mod proxy;
-
-use config::Config;
-use hyper::service::service_fn;
-use hyper_util::rt::{TokioExecutor, TokioIo};
-use hyper_util::server::conn::auto::Builder as ConnBuilder;
-use proxy::ProxyState;
+use hyper_util::rt::TokioIo;
 use std::env;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::task::JoinSet;
 use tracing::{error, info, warn};
 use tracing_subscriber::EnvFilter;
+use wasm_proxy::config::Config;
+use wasm_proxy::proxy::{self, ProxyState};
+use wasm_proxy::{hot_reload, plugin};
 
 /// Délai laissé aux connexions en cours pour se terminer proprement après
 /// un signal d'arrêt, avant qu'on abandonne et quitte quand même.
@@ -60,17 +53,7 @@ async fn main() -> anyhow::Result<()> {
                 let state = state.clone();
 
                 connections.spawn(async move {
-                    let service = service_fn(move |req| {
-                        let state = state.clone();
-                        async move { proxy::handle_request(state, req).await }
-                    });
-
-                    if let Err(e) = ConnBuilder::new(TokioExecutor::new())
-                        .serve_connection(io, service)
-                        .await
-                    {
-                        error!(error = %e, %peer_addr, "erreur sur la connexion");
-                    }
+                    proxy::serve_connection(io, peer_addr, state).await;
                 });
             }
             _ = shutdown_signal() => {

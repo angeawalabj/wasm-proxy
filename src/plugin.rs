@@ -11,14 +11,14 @@
 //!   - export de la memoire lineaire sous le nom `memory`
 //!   - `alloc(len: i32) -> i32` : reserve `len` octets, retourne un pointeur
 //!   - `filter_request(ptr: i32, len: i32) -> i64` (optionnel a l'usage,
-//!         mais si absent le plugin ne fait jamais rien sur la requete)
-//!         lit `len` octets de JSON a `ptr` :
-//!           {"method":"GET","path":"/admin","headers":{"x-api-key":"..."}}
+//!     mais si absent le plugin ne fait jamais rien sur la requete)
+//!     lit `len` octets de JSON a `ptr` :
+//!     {"method":"GET","path":"/admin","headers":{"x-api-key":"..."}}
 //!   - `filter_response(ptr: i32, len: i32) -> i64` (optionnel)
-//!         lit `len` octets de JSON a `ptr` :
-//!           {"status":200,"headers":{"content-type":"text/html"}}
-//!         (le corps de la reponse n'est PAS transmis au plugin dans cette
-//!         version : voir la note "Limite assumee" plus bas)
+//!     lit `len` octets de JSON a `ptr` :
+//!     {"status":200,"headers":{"content-type":"text/html"}}
+//!     (le corps de la reponse n'est PAS transmis au plugin dans cette
+//!     version : voir la note "Limite assumee" plus bas)
 //!
 //!   Les deux hooks retournent un i64 empaquete (out_ptr << 32) | out_len,
 //!   pointant vers du JSON de decision ecrit par le plugin :

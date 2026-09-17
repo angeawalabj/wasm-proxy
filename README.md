@@ -1,5 +1,7 @@
 # wasm-proxy
 
+[![CI](https://github.com/angeawalabj/wasm-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/angeawalabj/wasm-proxy/actions/workflows/ci.yml)
+
 Reverse proxy HTTP en Rust (Tokio + Hyper), avec un système de plugins
 WebAssembly pour filtrer les requêtes et les réponses.
 
@@ -203,7 +205,15 @@ plugins:
   - "error_masker.wasm"
 ```
 
-## Comportements couverts
+## Tests
+
+```bash
+cargo test
+```
+
+Tests d'intégration (`tests/proxy_integration.rs`) : proxy réel + backend(s)
+réels sur des ports éphémères, requêtes envoyées par un vrai client HTTP.
+Couvrent :
 
 - `/admin` sans header ou avec mauvaise clé → 403 ; avec la bonne clé → passe,
   header `x-plugin-checked: admin_guard` ajouté
@@ -211,9 +221,17 @@ plugins:
   `error_masker`, indépendamment de `filter_request`
 - `/api/*` et `/*` → forward normal, jamais affectés par les plugins ci-dessus
 - Backend injoignable → 502 ; aucune route ne matche → 404
-- Backend qui dort 3s avec `request_timeout_ms: 1000` → 504 en ~1.0s
-- Requête de 3s en vol, `SIGTERM` envoyé à 0.5s → la requête se termine avec
-  son 200, puis le process quitte
+- Backend qui dort 500ms avec `request_timeout_ms: 100` → 504 en moins de
+  400ms
+- Corps de requête dépassant `max_body_bytes` → 413
+
+Exécutés en CI à chaque push (`.github/workflows/ci.yml`) avec `cargo test`
+et `cargo clippy`.
+
+**Vérifié manuellement, pas encore automatisé :**
+
+- Arrêt propre : requête de 3s en vol, `SIGTERM` envoyé à 0.5s → la requête
+  se termine avec son 200, puis le process quitte
 - Hot-reload : ajout/retrait d'un plugin ou changement de route pris en
   compte en ~200-500ms, sans requête perdue, sans crash si le nouveau YAML
   est invalide
@@ -226,4 +244,4 @@ plugins:
    goulot d'étranglement mesuré (actuellement : une instance wasm neuve à
    chaque appel de plugin, par simplicité et isolation)
 3. Migration vers `wasmtime` pour la compilation JIT
-4. Tests d'intégration automatisés
+4. Tester le hot-reload et l'arrêt propre sur SIGTERM en automatisé
