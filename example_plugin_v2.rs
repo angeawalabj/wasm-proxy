@@ -1,5 +1,5 @@
-//! Équivalent Rust du plugin ABI v2 (voir admin_guard.c pour la version C
-//! utilisée dans le sandbox de démo). À compiler chez vous :
+//! Équivalent Rust du plugin ABI v2 (voir admin_guard.c pour la version C).
+//! Compilation :
 //!
 //!   rustup target add wasm32-unknown-unknown
 //!   rustc --target wasm32-unknown-unknown -O --crate-type=cdylib \

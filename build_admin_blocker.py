@@ -7,10 +7,10 @@ Génère à la main un module WebAssembly binaire implémentant l'ABI du proxy :
         retourne 1 si le chemin lu en mémoire vaut exactement "/admin", sinon 0
 
 Pas de dépendance à rustc/wasm32 ni à un assembleur wat->wasm : on écrit
-directement le format binaire WASM (sections + LEB128), pour contourner
-l'absence de toolchain adaptée dans ce sandbox. En conditions réelles, ce
-module serait plutôt écrit en Rust et compilé avec
-`cargo build --target wasm32-unknown-unknown` (voir example_plugin.rs).
+directement le format binaire WASM (sections + LEB128), sans passer par un
+toolchain wasm32. En pratique, ce module serait plutôt écrit en Rust et
+compilé avec `cargo build --target wasm32-unknown-unknown` (voir
+example_plugin.rs) — celui-ci reste comme exercice sur le format binaire.
 """
 
 import struct
