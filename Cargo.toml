@@ -1,0 +1,21 @@
+[package]
+name = "wasm-proxy"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.103"
+arc-swap = "1.9.2"
+http-body-util = "0.1.3"
+hyper = { version = "1.10.1", features = ["full"] }
+hyper-util = { version = "0.1.20", features = ["full"] }
+notify = "6"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+serde_yaml = "0.9.34"
+tokio = { version = "1.52.3", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+wasmi = { version = "0.31", default-features = false, features = ["std"] }
